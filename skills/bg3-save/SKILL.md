@@ -1,6 +1,6 @@
 ---
 name: bg3-save
-description: Analyze Baldur's Gate 3 .lsv saves, inspect companions and story evidence, identify possible missed quests using bg3.wiki, and plan or perform only capability-supported save repairs. Use for BG3 save analysis or editing requests, including Chinese requests about missing Act 1 quests, Karlach romance, gold, or bugged quests.
+description: Analyze Baldur's Gate 3 .lsv saves, inspect companions and story evidence, identify possible missed quests using bg3.wiki, diagnose modified or corrupted-save warnings, and plan or perform only capability-supported save repairs. Use for BG3 save analysis or editing requests, including Chinese requests about missing Act 1 quests, Karlach romance, gold, corrupted saves, or bugged quests.
 ---
 
 # BG3 Save

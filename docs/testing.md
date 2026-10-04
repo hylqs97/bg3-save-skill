@@ -12,6 +12,10 @@ Committed fixtures must be small synthetic data or fixture-generation inputs. Th
 
 CI runs that suite on Windows and Linux with Python 3.11 and 3.13. It does not download proprietary BG3 data, access a user's cloud saves, or enable game debugging. External-backend integration is opt-in, because LSLib is separately obtained and license-reviewed.
 
+## Recorded validation
+
+On **2026-10-04**, the complete local suite passed **94 tests in 58.851 seconds, with no skips**. `BG3SAVE_INTEGRATION=1` enabled the actual LSLib backend; an explicitly supplied private native `.lsv` enabled the optional native-template/checksum checks. The private file, its path and generated output are excluded from this repository. This result does not establish an actual BG3 reload: game acceptance for both a supported hotbar change and experimental marker restoration remains pending.
+
 ## Backend integration
 
 Follow [dependency setup](dependencies.md), then enable tests against the actual LSLib backend. They generate invented LSPK/LSF/Osiris inputs rather than loading private player saves.

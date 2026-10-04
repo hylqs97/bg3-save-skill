@@ -27,6 +27,8 @@ The full external-backend suite validates an actual LSLib serialization cycle, r
 
 The initial independent Skill review passed frontmatter, command routing, unsupported-gold refusal, bounded Mountain Pass recommendations, same-Act region cutoff reasoning, actual capitalized module metadata and linked-installation preservation checks. See [the review record](skill-forward-test.md).
 
+The complete local suite was subsequently recorded on **2026-10-04** as **94 tests, no skips**, with actual LSLib integration enabled and a private native save supplied for the optional template/checksum regression checks. This proves the checks covered by that suite; it does not prove game acceptance, publication or the final real local installation.
+
 Final private-save editing/reload, public GitHub state and the user's real local installation must be verified directly at delivery. Unit tests, synthetic fixtures, a temporary install directory, and a plausible repository URL cannot substitute for those final checks. An actual in-game reload does not make experimental flags or unsupported ECS writers safe.
 
 ## Delivery gates
