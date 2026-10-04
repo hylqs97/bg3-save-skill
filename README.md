@@ -182,6 +182,6 @@ python -m unittest discover -s tests -v
 
 On a POSIX shell use `BG3SAVE_INTEGRATION=1 python -m unittest discover -s tests -v`. Generate a standalone parser fixture with `python fixtures/generate.py --output /path/to/scratch/synthetic.lsv`; it is not a playable campaign. CI runs the ordinary suite and the Skill wrapper smoke test, not the external integration suite. See [test procedures](docs/testing.md) and [MVP acceptance](docs/acceptance.md). The MIT license covers this project's original code; LSLib and other external sources retain their licenses.
 
-On **2026-10-04**, the full local suite passed **94 tests with no skips** using the actual LSLib backend and an explicitly supplied private native save for additional template/checksum regression checks. No private save or generated report is committed. Those tests establish the reported structural/transaction properties; actual game-load acceptance remains pending.
+On **2026-10-04**, the full local suite passed **97 tests with no skips** using the actual LSLib backend and an explicitly supplied private native save for additional template/checksum regression checks. No private save or generated report is committed. Those tests establish the reported structural/transaction properties; actual game-load acceptance remains pending.
 
 The next most useful work is version-aware, evidence-preserving ECS extraction for inventory, gold and approval, followed by a small set of source-backed quest-repair recipes with real game reload validation. Broad writers should follow that evidence, not precede it.

@@ -197,6 +197,22 @@ class ModelShapeTests(unittest.TestCase):
         self.assertEqual(snapshot["act_source"], "unknown")
         self.assertEqual(snapshot["region"], "FixtureModdedLevel")
 
+    def test_malformed_save_info_shapes_return_json_errors_through_the_cli(self):
+        malformed = [[], None, {"Current Level": []}, {"Game Version": 42},
+                     {"Active Party": []}, {"Active Party": {"Characters": {}}},
+                     {"Active Party": {"Characters": [None]}},
+                     {"Active Party": {"Characters": [{"Origin": []}]}},
+                     {"Active Party": {"Characters": [{"Classes": "Wizard"}]}}]
+        for value in malformed:
+            with self.subTest(value=value):
+                (self.directory / "SaveInfo.json").write_text(json.dumps(value), encoding="utf-8")
+                output = io.StringIO()
+                with patch("bg3save.cli.Backend"), patch("bg3save.cli.service.inspect", side_effect=lambda *a: self.snapshot()), redirect_stdout(output):
+                    code = main(["inspect", "fictional.lsv", "--json"])
+                payload = json.loads(output.getvalue())
+                self.assertEqual(code, 2)
+                self.assertEqual(payload["error"]["code"], "invalid_save_info")
+
     def test_missing_story_save_reports_unavailable_instead_of_zero_inventory(self):
         snapshot = parse_snapshot(self.directory, self.metadata, self.globals, None)
         self.assertEqual(snapshot["flags"], [])

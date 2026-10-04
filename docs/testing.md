@@ -14,7 +14,9 @@ CI runs that suite on Windows and Linux with Python 3.11 and 3.13. It does not d
 
 ## Recorded validation
 
-On **2026-10-04**, the complete local suite passed **94 tests in 58.851 seconds, with no skips**. `BG3SAVE_INTEGRATION=1` enabled the actual LSLib backend; an explicitly supplied private native `.lsv` enabled the optional native-template/checksum checks. The private file, its path and generated output are excluded from this repository. This result does not establish an actual BG3 reload: game acceptance for both a supported hotbar change and experimental marker restoration remains pending.
+On **2026-10-04**, the complete local suite passed **97 tests in 54.053 seconds, with no skips**. `BG3SAVE_INTEGRATION=1` enabled the actual LSLib backend; an explicitly supplied private native `.lsv` enabled the optional native-template/checksum checks. The private file, its path and generated output are excluded from this repository. This result does not establish an actual BG3 reload: game acceptance for both a supported hotbar change and experimental marker restoration remains pending.
+
+Malformed JSON structure in SaveInfo, toolchain configuration and rollback manifests is rejected with a stable JSON error before save reading or output publication, as appropriate. Regression scenarios exercise the CLI boundary rather than swallowing all programming exceptions.
 
 ## Backend integration
 

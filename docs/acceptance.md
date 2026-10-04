@@ -27,7 +27,7 @@ The full external-backend suite validates an actual LSLib serialization cycle, r
 
 The initial independent Skill review passed frontmatter, command routing, unsupported-gold refusal, bounded Mountain Pass recommendations, same-Act region cutoff reasoning, actual capitalized module metadata and linked-installation preservation checks. See [the review record](skill-forward-test.md).
 
-The complete local suite was subsequently recorded on **2026-10-04** as **94 tests, no skips**, with actual LSLib integration enabled and a private native save supplied for the optional template/checksum regression checks. This proves the checks covered by that suite; it does not prove game acceptance, publication or the final real local installation.
+The complete local suite was subsequently recorded on **2026-10-04** as **97 tests, no skips**, with actual LSLib integration enabled and a private native save supplied for the optional template/checksum regression checks. This proves the checks covered by that suite; it does not prove game acceptance, publication or the final real local installation.
 
 Final private-save editing/reload, public GitHub state and the user's real local installation must be verified directly at delivery. Unit tests, synthetic fixtures, a temporary install directory, and a plausible repository URL cannot substitute for those final checks. An actual in-game reload does not make experimental flags or unsupported ECS writers safe.
 
@@ -42,7 +42,7 @@ Commit/push and the real local installation are separate final gates. Check the 
 ## Observed delivery state on 2026-10-04
 
 - The public repository is [hylqs97/bg3-save-skill](https://github.com/hylqs97/bg3-save-skill). GitHub confirmed public visibility, and the published `main` matched the local commit when checked.
-- The source revision `a3b9696a900946ad4246091fae8f8da9697ca9b3` passed [all four CI jobs](https://github.com/hylqs97/bg3-save-skill/actions/runs/37191443634): Windows and Ubuntu, each with Python 3.11 and 3.13. External-backend/private-save tests are covered by the separate 94-test local run above.
+- The source revision `a3b9696a900946ad4246091fae8f8da9697ca9b3` passed [all four CI jobs](https://github.com/hylqs97/bg3-save-skill/actions/runs/37191443634): Windows and Ubuntu, each with Python 3.11 and 3.13. External-backend/private-save tests are covered by the separate 97-test local run above.
 - The actual local Codex installation resolves to the checkout's Skill directory, with no independent parser copy. The installed wrapper passed both `capabilities` and a private candidate's structural `verify`; the latter correctly retained `game_load_validated: false`.
 - The running Codex session's available-skills catalog now lists `bg3-save`, and its installed `SKILL.md` was read from that catalog path. This supplies actual discovery evidence in addition to the filesystem/smoke checks.
 - Supported hotbar-edit and experimental marker-restoration runtime acceptance are **still unverified**. The Windows desktop was locked and screen capture/input unavailable; neither a completed CI run nor catalog discovery satisfies the game-load gate. The MVP goal remains incomplete until that gate passes.

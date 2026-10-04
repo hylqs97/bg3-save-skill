@@ -65,6 +65,11 @@ class Backend:
                 config = json.loads(config_file.read_text(encoding="utf-8-sig"))
             except (ValueError, OSError) as error:
                 raise SaveError("invalid_toolchain_config", str(error)) from error
+            if not isinstance(config, dict):
+                raise SaveError("invalid_toolchain_config", "toolchain.json must contain an object")
+            for field in ("divine", "bridge"):
+                if config.get(field) is not None and not isinstance(config[field], str):
+                    raise SaveError("invalid_toolchain_config", f"toolchain.json/{field} must be a path string or null")
         self.divine = Path(divine or os.environ.get("BG3SAVE_DIVINE") or config.get("divine") or "Divine.exe")
         self.bridge = Path(bridge or os.environ.get("BG3SAVE_BRIDGE") or config.get("bridge")
                            or cache_root() / "bridge" / "Bg3Save.LSLibBridge.dll")

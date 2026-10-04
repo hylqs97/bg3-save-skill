@@ -3,15 +3,19 @@
 from __future__ import annotations
 
 import importlib.util
+from contextlib import redirect_stdout
+import io
 import json
 import os
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
 from bg3save.backend import Backend, MAX_UNPACKED_BYTES, sha256, validate_entries
 from bg3save.errors import SaveError
+from bg3save.cli import main
 from bg3save.model import parse_snapshot, read_xml
 
 REPOSITORY = Path(__file__).resolve().parents[1]
@@ -22,6 +26,19 @@ _spec.loader.exec_module(_fixture)
 
 
 class ArchiveValidationTests(unittest.TestCase):
+    def test_malformed_toolchain_shapes_return_json_before_reading_a_save(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            for value in ([], None, {"divine": []}, {"bridge": 42}):
+                with self.subTest(value=value):
+                    (root / "toolchain.json").write_text(json.dumps(value), encoding="utf-8")
+                    output = io.StringIO()
+                    with patch("bg3save.backend.cache_root", return_value=root), patch("bg3save.cli.service.inspect") as inspect, redirect_stdout(output):
+                        code = main(["inspect", "nonexistent.lsv", "--json"])
+                    self.assertEqual(code, 2)
+                    self.assertEqual(json.loads(output.getvalue())["error"]["code"], "invalid_toolchain_config")
+                    inspect.assert_not_called()
+
     def test_normal_nested_member_paths(self):
         validate_entries([{"name": "meta.lsf", "size": 1}, {"name": "LevelCache/WLD_Main_A.lsf", "size": 5}])
 

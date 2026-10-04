@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from bg3save.backend import Backend, sha256
 from bg3save.cli import main
@@ -24,6 +25,27 @@ spec.loader.exec_module(fixture)
 
 
 class PublicApiTests(unittest.TestCase):
+    def test_malformed_rollback_manifest_returns_json_before_any_restore(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            manifest_path, destination = root / "manifest.json", root / "restored.lsv"
+            nominal = {"source": "original.lsv", "backup": "backup.lsv",
+                       "source_sha256": "0" * 64, "backup_sha256": "0" * 64}
+            malformed = [[], None, {}, dict(nominal, backup=[]),
+                         dict(nominal, source=None), dict(nominal, source_sha256=42),
+                         dict(nominal, backup_sha256="invalid")]
+            for value in malformed:
+                with self.subTest(value=value):
+                    manifest_path.write_text(json.dumps(value), encoding="utf-8")
+                    output = io.StringIO()
+                    with patch("bg3save.cli.Backend"), patch("bg3save.service.verify") as verify, patch("bg3save.service._publish") as publish, redirect_stdout(output):
+                        code = main(["rollback", str(manifest_path), "--output", str(destination), "--json"])
+                    self.assertEqual(code, 2)
+                    self.assertEqual(json.loads(output.getvalue())["error"]["code"], "invalid_manifest")
+                    verify.assert_not_called()
+                    publish.assert_not_called()
+                    self.assertFalse(destination.exists())
+
     def test_capabilities_are_explicit_and_do_not_claim_ecs_writes(self):
         capabilities = service.capabilities()
         self.assertEqual(capabilities["operations"]["set-gold"], "UNSUPPORTED")

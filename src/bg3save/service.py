@@ -344,6 +344,14 @@ def modify(source: Path, output: Path | None, operation: str, value=None, *, slo
 def rollback(manifest_path: Path, output: Path, backend: Backend | None = None) -> dict:
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8-sig"))
+        if not isinstance(manifest, dict):
+            raise SaveError("invalid_manifest", "Rollback manifest must contain an object")
+        for field in ("backup", "source", "source_sha256", "backup_sha256"):
+            if not isinstance(manifest.get(field), str) or not manifest[field]:
+                raise SaveError("invalid_manifest", f"Rollback manifest/{field} must be a nonempty string")
+        for field in ("source_sha256", "backup_sha256"):
+            if len(manifest[field]) != 64 or any(c not in "0123456789abcdef" for c in manifest[field]):
+                raise SaveError("invalid_manifest", f"Rollback manifest/{field} must be a SHA-256 digest")
         backup = Path(manifest["backup"])
         expected = manifest["source_sha256"]
     except (OSError, ValueError, KeyError) as error:

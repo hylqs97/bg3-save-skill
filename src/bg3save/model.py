@@ -68,6 +68,33 @@ def normalize_story(export: dict) -> dict:
             "fact_count": export.get("fact_count"), "databases": databases}
 
 
+def read_save_info(directory: Path) -> dict:
+    path = directory / "SaveInfo.json"
+    if not path.is_file():
+        return {}
+    try:
+        info = json.loads(path.read_text(encoding="utf-8-sig"))
+    except ValueError as error:
+        raise SaveError("invalid_save_info", "Malformed SaveInfo.json") from error
+    if not isinstance(info, dict):
+        raise SaveError("invalid_save_info", "SaveInfo.json must contain an object")
+    for field in ("Current Level", "Game Version", "Save Name"):
+        if info.get(field) is not None and not isinstance(info[field], str):
+            raise SaveError("invalid_save_info", f"SaveInfo.json/{field} must be a string or null")
+    active_party = info.get("Active Party", {})
+    if not isinstance(active_party, dict):
+        raise SaveError("invalid_save_info", "SaveInfo.json/Active Party must be an object")
+    characters = active_party.get("Characters", [])
+    if not isinstance(characters, list) or any(not isinstance(c, dict) for c in characters):
+        raise SaveError("invalid_save_info", "SaveInfo.json/Active Party/Characters must be a list of objects")
+    for character in characters:
+        if character.get("Origin") is not None and not isinstance(character["Origin"], str):
+            raise SaveError("invalid_save_info", "SaveInfo.json character Origin must be a string or null")
+        if "Classes" in character and not isinstance(character["Classes"], list):
+            raise SaveError("invalid_save_info", "SaveInfo.json character Classes must be a list")
+    return info
+
+
 def parse_snapshot(directory: Path, metadata_xml: Path, globals_xml: Path | None,
                    story_export: dict | None) -> dict:
     root = read_xml(metadata_xml)
@@ -75,12 +102,7 @@ def parse_snapshot(directory: Path, metadata_xml: Path, globals_xml: Path | None
     if metadata_node is None:
         raise SaveError("missing_metadata", "No MetaData node found")
     metadata = attrs(metadata_node)
-    info = {}
-    if (directory / "SaveInfo.json").is_file():
-        try:
-            info = json.loads((directory / "SaveInfo.json").read_text(encoding="utf-8-sig"))
-        except ValueError as error:
-            raise SaveError("invalid_save_info", "Malformed SaveInfo.json") from error
+    info = read_save_info(directory)
     region = info.get("Current Level") or metadata.get("Level") or metadata.get("LevelUniqueKey")
     versions = [attrs(n).get("Object") for n in root.findall(".//node[@id='GameVersion']")]
     mods = [attrs(n) for n in root.findall(".//node[@id='ModuleShortDesc']")]
