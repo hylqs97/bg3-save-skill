@@ -38,3 +38,11 @@ A modified/corrupted-save warning is a failed runtime acceptance check, even if 
 The explicit `restore-integrity-marker` recovery operation is **EXPERIMENTAL**: a canonical checksum match, successful parsing of every LSF member, a unique false marker, minimal metadata diff, untouched payloads and a verified backup are necessary preflight/transaction evidence. They do not establish gameplay acceptance or replace item 6's supported-edit reload. Runtime verification for this recovery remains pending. Rollback deliberately restores the false original marker and returns a verification warning with exact byte identity.
 
 Commit/push and the real local installation are separate final gates. Check the exact published `main` commit and repository visibility, then run the installed wrapper from the actual Codex Skill path. A temporary test installation proves the installer behavior but does not satisfy item 16.
+
+## Observed delivery state on 2026-10-04
+
+- The public repository is [hylqs97/bg3-save-skill](https://github.com/hylqs97/bg3-save-skill). GitHub confirmed public visibility, and the published `main` matched the local commit when checked.
+- The source revision `a3b9696a900946ad4246091fae8f8da9697ca9b3` passed [all four CI jobs](https://github.com/hylqs97/bg3-save-skill/actions/runs/37191443634): Windows and Ubuntu, each with Python 3.11 and 3.13. External-backend/private-save tests are covered by the separate 94-test local run above.
+- The actual local Codex installation resolves to the checkout's Skill directory, with no independent parser copy. The installed wrapper passed both `capabilities` and a private candidate's structural `verify`; the latter correctly retained `game_load_validated: false`.
+- The running Codex session's available-skills catalog now lists `bg3-save`, and its installed `SKILL.md` was read from that catalog path. This supplies actual discovery evidence in addition to the filesystem/smoke checks.
+- Supported hotbar-edit and experimental marker-restoration runtime acceptance are **still unverified**. The Windows desktop was locked and screen capture/input unavailable; neither a completed CI run nor catalog discovery satisfies the game-load gate. The MVP goal remains incomplete until that gate passes.
