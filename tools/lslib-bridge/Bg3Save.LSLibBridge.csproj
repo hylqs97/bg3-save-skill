@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <DefaultItemExcludes>$(DefaultItemExcludes);obj/**;bin/**</DefaultItemExcludes>
+    <LSLibDir Condition="'$(LSLibDir)' == ''">$(BG3SAVE_LSLIB_DIR)</LSLibDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="LSLib"><HintPath>$(LSLibDir)/LSLib.dll</HintPath></Reference>
+    <Content Include="$(LSLibDir)/*.dll" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <Target Name="RequireExternalLSLib" BeforeTargets="ResolveReferences">
+    <Error Condition="!Exists('$(LSLibDir)/LSLib.dll')" Text="Pass -p:LSLibDir=&lt;official ExportTool/Packed/Tools directory&gt;. No proprietary files or dependency binaries are vendored." />
+  </Target>
+</Project>

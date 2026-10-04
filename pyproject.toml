@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bg3-save-skill"
+version = "0.1.0"
+description = "Evidence-based Baldur's Gate 3 save inspection and conservative semantic editing"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+readme = "README.md"
+dependencies = []
+
+[project.scripts]
+bg3save = "bg3save.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+bg3save = ["data/*.json"]

@@ -1,0 +1,4 @@
+interface:
+  display_name: "BG3 Save"
+  short_description: "Analyze BG3 saves, missed quests and safe edits"
+  default_prompt: "Use $bg3-save to analyze my latest Baldurs Gate 3 save and identify possibly missed quests with sources."
