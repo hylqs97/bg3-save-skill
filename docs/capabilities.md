@@ -4,8 +4,8 @@ The CLI's `capabilities --json` is authoritative for the installed revision. Doc
 
 | Tier | Meaning | Current examples |
 |---|---|---|
-| `SUPPORTED` / `safe` | Implemented deterministic operation with automatic validation and stated format limits | Structured metadata/party/Story queries; output-only hotbar-lock change; backup, dry-run, diff, verify, rollback |
-| `EXPERIMENTAL` / `experimental` | Implemented with a real uncertainty that the caller must explicitly opt into | Setting or removing one Story flag; restoring a persisted integrity marker; selected quest/romance interpretations |
+| `SUPPORTED` / `safe` | Implemented deterministic operation with automatic validation and stated format limits | Structured metadata/party/Story queries; backup, dry-run, diff, verify, rollback |
+| `EXPERIMENTAL` / `experimental` | Implemented with a real uncertainty that the caller must explicitly opt into for a write | Hotbar-lock metadata; setting or removing one Story flag; restoring a persisted integrity marker; selected quest/romance interpretations |
 | `UNSUPPORTED` / `unsupported` | No reliable implementation or insufficient evidence for this save | Gold/item/approval writes, arbitrary ECS edits, generic quest repair, complete missed-content certification |
 
 An operation's tier does not imply that every individual field can be read. Optional/unknown fields are emitted as unknown with their reasons. A query may be supported while a gameplay inference derived from its evidence is experimental.
@@ -16,9 +16,9 @@ An operation's tier does not imply that every individual field can be read. Opti
 - Companion/character summaries expose the values recoverable from save resources, including level, class and experience when available. Optional physical/inventory/approval fields are not fabricated.
 - Story flags and journal records are inspectable with raw identifiers and evidence. Typed `DB_ApprovalRating` and `DB_ORI_Dating`/`DB_ORI_Partnered` facts are readable when present. Interpreting selected facts as a full romance state remains experimental; absence is not proof of zero approval or an absent relationship.
 - Quest analysis covers the bundled catalog. `unknown` and `possibly_available` are valid outcomes, not parse failures. A deadline beyond the current Act requires supporting task-state evidence before `missed` is reported.
-- The safe writer changes the selected client/player slot's `HotbarLocked` metadata boolean only. It does not change HP, quests, items, relationships or character progression. Game-menu save naming is not treated as a reliably editable metadata field.
+- `set-hotbar-lock` is **EXPERIMENTAL** and requires `--allow-experimental`. It changes the selected client/player slot's `HotbarLocked` metadata boolean only. The exact output round-tripped and loaded without the save warning, but a native re-save contained true after an output with false. The cause is unknown; a requested UI effect or persistent setting change is not verified. It does not change HP, quests, items, relationships or character progression. Game-menu save naming is not treated as a reliably editable metadata field.
 - Experimental flag writers alter a narrowly specified global Story flag (`DB_GlobalFlag`) through LSLib and are gated by `--allow-experimental`. They do not write object flags or synchronize ECS/triggers and cannot promise to repair the other state a quest expects.
-- `restore-integrity-marker` is a separate **EXPERIMENTAL** recovery operation, also requiring `--allow-experimental`. It changes a unique boolean `MetaData/Sanity` from false to true only after a canonical checksum match and parsing every LSF member. It preserves all other metadata fields and all other payload bytes. It does not repair opaque ECS corruption and has no automatic or currently proven runtime acceptance.
+- `restore-integrity-marker` is a separate **EXPERIMENTAL** recovery operation, also requiring `--allow-experimental`. It changes a unique boolean `MetaData/Sanity` from false to true only after a canonical checksum match and parsing every LSF member. It preserves all other metadata fields and all other payload bytes. One diagnosed private case passed actual warning-free loading and native re-save checks on 2026-10-04. That case does not establish automatic acceptance or a general opaque ECS corruption repair.
 - Gold, item addition/removal, approval, resurrection and generic quest-repair writers are unsupported. The Skill still handles those requests by collecting evidence and explaining the supported boundary.
 
 ## Unsupported format behavior
@@ -32,6 +32,8 @@ Checksum validation uses the native canonical full-path ordering, not only the d
 ## Verification levels
 
 `verify` checks the properties it reports: extraction, resource parsing, expected members and other implemented structural checks. A write's diff and payload checks establish scope. Neither is an automatic proof that BG3 has loaded the output. In-game reload validation is reported only when actually performed.
+
+The CLI's `game_load_validated: false` remains correct after a separate manual or agent-observed load: the CLI did not perform that check itself. Record the exact output, observed load and subsequent native-save evidence separately. The diagnosed integrity-marker case satisfies the MVP's verified safe-repair example; hotbar gameplay behavior remains unverified.
 
 A game warning about a modified or corrupted save fails the runtime acceptance gate. Continuing past the warning is not equivalent to a clean reload. See [the delivery gates](acceptance.md#delivery-gates).
 

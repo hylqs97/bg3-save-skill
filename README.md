@@ -1,6 +1,6 @@
 # BG3 Save Skill
 
-A local Agent Skill and deterministic CLI for **Baldur's Gate 3 save analysis**: inspect a `.lsv`, expose save evidence as JSON, identify possible missed content with bg3.wiki sources, and perform narrowly supported edits with backup and rollback.
+A local Agent Skill and deterministic CLI for **Baldur's Gate 3 save analysis**: inspect a `.lsv`, expose save evidence as JSON, identify possible missed content with bg3.wiki sources, and perform narrowly scoped experimental edits with backup and rollback.
 
 The Agent interprets natural language; the CLI reads or edits explicit semantic fields through LSLib. Player saves stay on your machine. The project does **not** claim to detect every missed quest or safely rewrite arbitrary ECS/LSMF state.
 
@@ -14,9 +14,9 @@ The Agent interprets natural language; the CLI reads or edits explicit semantic 
 | Approval and dating/partner Story facts | **SUPPORTED when present** | Typed `DB_ApprovalRating` and `DB_ORI_*` records; not full ECS relationship state |
 | Quest and possible missed-content analysis | **EXPERIMENTAL** | A curated catalog of 20 quest/event rules across Acts 1–3; explicit evidence, confidence, prerequisites and sources |
 | Selected companion/romance interpretations | **EXPERIMENTAL** | Evidence from known story states; not an exhaustive relationship simulator |
-| Set one player's saved hotbar-lock state | **SUPPORTED / safe** | Minimal `HotbarLocked` metadata change to a new output, with automatic backup/verify/diff |
+| Set one player's saved hotbar-lock metadata | **EXPERIMENTAL** | Requires explicit opt-in; the field round-trips, but the requested UI state and persistence are not established |
 | Set or unset a Story flag | **EXPERIMENTAL** | Requires explicit opt-in; does not repair all related quest/NPC state |
-| Restore a persisted integrity marker | **EXPERIMENTAL** | Explicit recovery operation after canonical checksum and all LSF parse checks; not a general corruption repair or a verified game-load guarantee |
+| Restore a persisted integrity marker | **EXPERIMENTAL** | One diagnosed case passed actual game-load and native re-save checks; the operation is not a general corruption repair |
 | Dry-run, backup, diff and rollback | **SUPPORTED** | Original is retained; manifest records what changed and where its backup is |
 | Gold, item add/remove, approval, resurrection and generic quest-repair writes | **UNSUPPORTED** | No reliable semantic writer yet; the CLI refuses rather than patches opaque data |
 | Complete inventory/gold/ECS extraction and all missed content | **UNSUPPORTED** | Modern components may be opaque; absence of extracted values proves nothing |
@@ -111,11 +111,11 @@ An actionable content result includes:
 
 This example illustrates the report shape, not a judgment about your save. Actual results include the observed evidence and source provenance. A missing flag alone cannot justify `missed`, `completed` or a confident negative.
 
-### A supported edit
+### An experimental metadata edit
 
 ```console
-bg3save modify set-hotbar-lock save.lsv true --slot 1 --output changed.lsv --dry-run --json
-bg3save modify set-hotbar-lock save.lsv true --slot 1 --output changed.lsv --json
+bg3save modify set-hotbar-lock save.lsv true --slot 1 --output changed.lsv --allow-experimental --dry-run --json
+bg3save modify set-hotbar-lock save.lsv true --slot 1 --output changed.lsv --allow-experimental --json
 bg3save diff save.lsv changed.lsv --json
 bg3save verify changed.lsv --json
 bg3save rollback manifest.json --output restored.lsv --json
@@ -123,7 +123,9 @@ bg3save rollback manifest.json --output restored.lsv --json
 
 The exact backup and manifest paths come from the real modification result. Never guess the manifest filename. Dry-run generates a plan without writing a backup/output; an executed edit inspects, backs up, mutates the allowlisted field, repacks, verifies and compares the result. The original is never the output path. Rollback checks the backup and creates a restored copy.
 
-Experimental Story flag commands require `--allow-experimental`. Read [editing guidance](skills/bg3-save/references/editing.md) before using them. Flags can be coupled to many other game states; a valid flag write is not a generic quest repair.
+Hotbar editing changes only the saved `HotbarLocked` field. In an actual test, a false-field output loaded without the modified/corrupted-save warning, but the game's subsequent native save contained true. The cause is not established. This does not prove that the requested UI state took effect or persisted, and the operation must not be presented as a working gameplay setting change.
+
+All current save-edit operations require `--allow-experimental`. Read [editing guidance](skills/bg3-save/references/editing.md) before using them. Story flags can be coupled to many other game states; a valid flag write is not a generic quest repair.
 
 ### Experimental integrity-marker recovery
 
@@ -134,7 +136,9 @@ bg3save modify restore-integrity-marker save.lsv --output recovered.lsv --allow-
 bg3save modify restore-integrity-marker save.lsv --output recovered.lsv --allow-experimental --json
 ```
 
-This operation requires the supported version/header, a correct **canonical** native checksum, a false original marker, a unique boolean `MetaData/Sanity` field, and successful parsing of every `.lsf` member. It changes only that marker to true, preserves all other resource fields and all other payload bytes, and performs the normal backup, plan, template repack, verification and diff cycle. The CLI still reports **EXPERIMENTAL** and `game_load_validated: false`. It cannot prove that opaque ECS state is undamaged; actual BG3 reloading without the warning remains required. Runtime acceptance is still pending for this operation.
+This operation requires the supported version/header, a correct **canonical** native checksum, a false original marker, a unique boolean `MetaData/Sanity` field, and successful parsing of every `.lsf` member. It changes only that marker to true, preserves all other resource fields and all other payload bytes, and performs the normal backup, plan, template repack, verification and diff cycle. The CLI still reports **EXPERIMENTAL** and `game_load_validated: false`: it does not control the game or automatically validate a load. It cannot prove that opaque ECS state is undamaged; each recovery needs an actual warning-free BG3 reload.
+
+On **2026-10-04**, one diagnosed private save with an inherited false marker completed that full recovery cycle. The exact generated copy loaded without the warning, a subsequent native save retained a true marker and valid checksums, and key party/story summaries were checked against the source. Continued play produced a later native save that also verified, with the player reporting no error. This is evidence for that specific repair, not a guarantee for every false-marker save. See [acceptance evidence](docs/acceptance.md).
 
 Rollback restores the exact original bytes. If that original had `Sanity = false`, rollback intentionally preserves it and reports `verification.valid: false` with a warning; that is not a failed byte-for-byte rollback or evidence that the original warning was repaired.
 
@@ -157,7 +161,7 @@ The first two produce a bounded, source-backed report. The companion request sep
 
 No private save is shipped in this repository. Save files can reveal a player's campaign, character names, mods and progression; keep generated reports/backups private. The project does not upload them. Wiki queries retrieve public pages only. Mods can change vanilla quest conditions, so content reports include uncertainty.
 
-Every executed supported edit preserves the original, creates a backup before editing, and records a manifest after the new output passes verification. A changed save remains an additional file; the CLI does not delete backups, silently overwrite newer saves, edit a cloud account or control the live game. Keep the backup until the result has actually loaded and behaved as intended. Experimental modifications may still change gameplay unexpectedly despite structural integrity.
+Every executed edit preserves the original, creates a backup before editing, and records a manifest after the new output passes verification. A changed save remains an additional file; the CLI does not delete backups, silently overwrite newer saves, edit a cloud account or control the live game. Keep the backup until the result has actually loaded and behaved as intended. Experimental modifications may still change gameplay unexpectedly despite structural integrity.
 
 ## Architecture and development
 
@@ -182,6 +186,6 @@ python -m unittest discover -s tests -v
 
 On a POSIX shell use `BG3SAVE_INTEGRATION=1 python -m unittest discover -s tests -v`. Generate a standalone parser fixture with `python fixtures/generate.py --output /path/to/scratch/synthetic.lsv`; it is not a playable campaign. CI runs the ordinary suite and the Skill wrapper smoke test, not the external integration suite. See [test procedures](docs/testing.md) and [MVP acceptance](docs/acceptance.md). The MIT license covers this project's original code; LSLib and other external sources retain their licenses.
 
-On **2026-10-04**, the full local suite passed **97 tests with no skips** using the actual LSLib backend and an explicitly supplied private native save for additional template/checksum regression checks. No private save or generated report is committed. Those tests establish the reported structural/transaction properties; actual game-load acceptance remains pending.
+On **2026-10-04**, the full local suite passed **98 tests with no skips** using the actual LSLib backend and an explicitly supplied private native save for additional template/checksum regression checks. No private save or generated report is committed. Those tests establish the reported structural/transaction properties. The separate actual-load evidence establishes the diagnosed integrity-marker repair above; it does not establish a hotbar UI effect or generic gameplay repair.
 
 The next most useful work is version-aware, evidence-preserving ECS extraction for inventory, gold and approval, followed by a small set of source-backed quest-repair recipes with real game reload validation. Broad writers should follow that evidence, not precede it.

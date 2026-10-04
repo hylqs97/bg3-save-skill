@@ -101,7 +101,7 @@ The adapter was exercised against a private local BG3 save with product version 
 - Native template repack: every extracted payload byte, file-table order, physical order and compression flag preserved for two private native saves. Both checksums matched each source's original header. The compressed bytes can differ without altering any uncompressed payload.
 - Regression tests include nested-path canonical checksum order, template member/order/compression preservation, missing/extra member rejection and an optional private native-save roundtrip.
 
-The CLI tests and a separate game load check provide the higher-level editor evidence. The adapter never reports an in-game load check it did not perform.
+The CLI tests and separate game-load observations provide the higher-level editor evidence. One diagnosed integrity-marker recovery loaded without the warning and was natively re-saved with a true marker and valid checksums on 2026-10-04; see [acceptance evidence](acceptance.md). A hotbar metadata output also loaded cleanly, but its subsequent native save contained true after an edited false value; UI effect and persistence remain unverified. The adapter never reports an in-game load check it did not perform, and all current save-edit operations remain experimental.
 
 ## Primary implementation references
 

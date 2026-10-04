@@ -43,17 +43,19 @@ Use `--offline` only when browsing is unavailable or the user requests it. Offli
 Read [editing.md](editing.md) first. Supported operations are determined by the current `capabilities --json` result and the actual save version.
 
 ```console
-bg3save modify set-hotbar-lock save.lsv true --slot 1 --output changed.lsv --dry-run --json
-bg3save modify set-hotbar-lock save.lsv true --slot 1 --output changed.lsv --json
+bg3save modify set-hotbar-lock save.lsv true --slot 1 --output changed.lsv --allow-experimental --dry-run --json
+bg3save modify set-hotbar-lock save.lsv true --slot 1 --output changed.lsv --allow-experimental --json
 bg3save modify set-flag save.lsv FLAG_UUID --output changed.lsv --allow-experimental --dry-run --json
 bg3save modify unset-flag save.lsv FLAG_UUID --output changed.lsv --allow-experimental --dry-run --json
 bg3save modify restore-integrity-marker save.lsv --output recovered.lsv --allow-experimental --dry-run --json
 bg3save rollback manifest.json --output restored.lsv --json
 ```
 
-The sole safe writer is hotbar-lock metadata. Flag writes are experimental; they do not complete the surrounding story state. Gold, item addition/removal, approval, resurrection and generic quest repair have no supported writer in the MVP. A requested operation returning `unsupported` is an honest capability result, not a reason for the Agent to patch binary/XML content itself.
+All current save-edit operations are **EXPERIMENTAL** and require `--allow-experimental`. Hotbar metadata round-trips, but an actual false-field output was natively re-saved with true after loading without the save warning. The cause is unknown; the requested UI effect and persistence have not been verified. Flag writes do not complete the surrounding story state. Gold, item addition/removal, approval, resurrection and generic quest repair have no supported writer in the MVP. A requested operation returning `unsupported` is an honest capability result, not a reason for the Agent to patch binary/XML content itself.
 
 `restore-integrity-marker` has no value argument. It is **EXPERIMENTAL** and requires `--allow-experimental`. It accepts only a false original `Sanity` marker with correct canonical checksum, supported format/version, a unique boolean field and successful parsing of every LSF member. It restores only that persisted marker; it is not an opaque ECS repair or proof that the game will accept the output. Remove `--dry-run` only for an authorized, diagnosed recovery. Ordinary hotbar/flag edits still refuse a false original marker.
+
+One diagnosed marker-recovery case passed a separate warning-free load and native re-save checks on 2026-10-04; later continued-play verification also passed. That is evidence for that exact repair, not authorization or a success guarantee for a new save. Automatic CLI output remains `game_load_validated: false`; report actual external checks separately.
 
 ## Output interpretation
 

@@ -12,7 +12,7 @@ flowchart LR
     Q --> A
     C --> P[Plan and dry-run]
     P --> B[Backup original]
-    B --> M[Supported field mutation]
+    B --> M[Allowlisted field mutation]
     M --> R[Repack new .lsv]
     R --> V[Verify and diff]
     V --> A
@@ -38,10 +38,12 @@ See [the maintained source guide](../skills/bg3-save/references/sources.md).
 
 ## Write boundaries
 
-Safe writes are semantic, explicitly allowlisted, version/field-gated operations. The supported write changes only `MetaData/ClientDatas/ClientData`'s `HotbarLocked` boolean for a selected player slot. Story flag edits are experimental because a quest outcome can also depend on databases, entity state, triggers, and journal records. Gold, inventory, approval and runtime NPC repair are unsupported writers in this MVP.
+Writes are semantic, explicitly allowlisted, version/field-gated operations. All current save-edit operations are experimental and require explicit opt-in. Hotbar editing changes only `MetaData/ClientDatas/ClientData`'s `HotbarLocked` boolean for a selected player slot, but its UI effect and persistence are not established: an actual false-field output loaded cleanly and a subsequent native save contained true. The cause remains unknown. Story flag edits are experimental because a quest outcome can also depend on databases, entity state, triggers, and journal records. Gold, inventory, approval and runtime NPC repair are unsupported writers in this MVP.
 
 A modification always creates a separate output and retains a backup and manifest. Verification distinguishes container/resource integrity from in-game compatibility. The former can be automated; the latter requires loading the result in BG3. Rollback writes a restored copy from the verified backup, leaving the original untouched.
 
 Native checksum verification uses canonical, ordinal case-insensitive full-path order; physical-order hashing remains a diagnostic and is insufficient on its own. Production repacking uses an original-archive template to retain physical and file-table layout, compression flags and supported headers. Resource conversion separately preserves the original LSF revision and metadata format.
 
 Explicit `restore-integrity-marker` is experimental recovery for a false persisted `MetaData/Sanity` marker after canonical checksum and every-LSF parse checks. It changes no other resource fields or payload bytes and does not certify opaque ECS semantics. The ordinary writer never performs that step implicitly. A rollback reproduces the original failed marker when present, reporting its verification warning separately from exact byte restoration.
+
+One diagnosed integrity-marker recovery was actually loaded without the warning and natively re-saved with a true marker and valid checksums on 2026-10-04. That tested case supplies the MVP's safe-repair evidence while the general operation remains experimental. The CLI still emits `game_load_validated: false`; external runtime observations belong in a separate acceptance record.

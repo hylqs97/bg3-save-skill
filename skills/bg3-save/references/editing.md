@@ -4,7 +4,7 @@
 
 Use `capabilities --json` and the actual save's version before selecting an edit. The verified baseline is BG3 product version **4.1.1.7631656** (Patch 8 lineage) with Story/Osiris **1.15**, using the tested LSLib backend. The internal Script Extender engine identifier `4.69.95.0` is not the BG3 product version.
 
-The supported writer changes the `HotbarLocked` boolean in a selected player/client slot's save metadata. Its small scope makes an automated preservation check practical. It must not be represented as a gold, inventory or quest writer.
+All current save-edit operations are **EXPERIMENTAL** and require `--allow-experimental`. Hotbar editing changes the `HotbarLocked` boolean in a selected player/client slot's save metadata. Its small scope makes an automated preservation check practical, but does not establish the game's use of that value. An actual false-field output loaded without the save warning; its subsequent native save contained true. The cause is unknown, and no successful UI effect or persistent hotbar change is claimed. It must not be represented as a gold, inventory or quest writer.
 
 Ordinary writes additionally require single-part package LSPK 18, flags and priority both zero, a valid canonical native archive checksum, `Sanity = true`, and matching SaveInfo/metadata game-version evidence. A physical-order MD5 match alone is insufficient. The original LSF revision and metadata format are retained by template-based conversion, and production repacking preserves the original archive layout. If an input has already been marked `Sanity = false`, the ordinary writer refuses it; do not bypass that refusal with raw edits or by disabling game integrity checks.
 
@@ -23,13 +23,15 @@ bg3save modify restore-integrity-marker save.lsv --output recovered.lsv --allow-
 bg3save modify restore-integrity-marker save.lsv --output recovered.lsv --allow-experimental --json
 ```
 
-The result remains **EXPERIMENTAL** with `game_load_validated: false`; runtime acceptance is still pending. Successful LSF parsing does not prove that opaque ECS components are semantically intact. A separately observed, warning-free game reload is required before reporting recovery success. A read-only analysis request does not authorize this write.
+The result remains **EXPERIMENTAL** with `game_load_validated: false`: the CLI does not perform a runtime check. Successful LSF parsing does not prove that opaque ECS components are semantically intact. A separately observed, warning-free game reload is required before reporting recovery success. A read-only analysis request does not authorize this write.
+
+One diagnosed private case completed that external acceptance check on 2026-10-04: the exact generated copy loaded without the warning, a native re-save retained a true marker and valid checksums, key party/story summaries were compared, and subsequent continued-play verification passed. This establishes the tested repair, not a general corruption-repair guarantee. For each new source, diagnose and inspect afresh rather than treating that result as proof that all false markers may be cleared.
 
 ## Write sequence
 
 1. Read the exact source and inspect its version, relevant field, and existing value. Check that it is not being written by the running game/cloud client.
 2. Generate the semantic plan with `--dry-run`. Present the actual before/after field and capability. No output/backup should be created by dry-run.
-3. Execute the user's authorized supported operation to a distinct, new output path. The CLI must automatically back up the original, record hashes and a manifest, preserve untouched members, repack, and verify the result.
+3. Execute the user's authorized semantic operation, with the required experimental opt-in, to a distinct, new output path. The CLI must automatically back up the original, record hashes and a manifest, preserve untouched members, repack, and verify the result.
 4. Inspect `diff` and the writer's validation. The change must be confined to the plan. A failure, unexpected difference, unsupported version or missing field is not success; retain the original and explain the failure.
 5. Return the output path, backup/manifest, changed value and verification level. If an actual game reload is authorized and possible, perform it and report the observed result separately.
 

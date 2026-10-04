@@ -28,13 +28,13 @@ def capabilities() -> dict:
         "find": "SUPPORTED", "inspect": "SUPPORTED", "party": "SUPPORTED", "character": "SUPPORTED",
         "flags": "SUPPORTED", "approval-story-facts": "SUPPORTED", "romance-story-facts": "SUPPORTED",
         "quests": "EXPERIMENTAL", "missed-content": "EXPERIMENTAL", "diff": "SUPPORTED",
-        "verify": "SUPPORTED", "set-hotbar-lock": "SUPPORTED", "set-flag": "EXPERIMENTAL",
+        "verify": "SUPPORTED", "set-hotbar-lock": "EXPERIMENTAL", "set-flag": "EXPERIMENTAL",
         "unset-flag": "EXPERIMENTAL", "rollback": "SUPPORTED", "set-gold": "UNSUPPORTED",
         "restore-integrity-marker": "EXPERIMENTAL",
         "add-item": "UNSUPPORTED", "remove-item": "UNSUPPORTED", "set-approval": "UNSUPPORTED",
         "repair": "UNSUPPORTED"},
         "safe_write_versions": sorted(SAFE_WRITE_VERSIONS), "package_write_versions": [18],
-        "limits": ["SUPPORTED write is a narrow client UI state, not arbitrary ECS editing.",
+        "limits": ["Save modifications are experimental; hotbar metadata writeback does not establish its in-game effect or persistence.",
                    "verify checks structure and typed facts; actual in-game load is a separate test.",
                    "Quest analysis covers curated rules only; absent evidence remains uncertain."]}
 
@@ -203,7 +203,7 @@ def modify(source: Path, output: Path | None, operation: str, value=None, *, slo
         raise SaveError("unsupported_operation", f"{operation} cannot currently be safely written")
     flag_edit = operation in ("set-flag", "unset-flag")
     marker_edit = operation == "restore-integrity-marker"
-    experimental = flag_edit or marker_edit
+    experimental = True
     if experimental and not allow_experimental:
         raise SaveError("experimental_opt_in_required", "This operation requires --allow-experimental; inspect its risks before executing",
                         status="EXPERIMENTAL")
@@ -268,14 +268,15 @@ def modify(source: Path, output: Path | None, operation: str, value=None, *, slo
             intended_member = "StorySave.bin"
         plan = {"operation": operation, "capability": "EXPERIMENTAL" if experimental else "SUPPORTED",
                 "field": "DB_GlobalFlag" if flag_edit else "MetaData/Sanity" if marker_edit else "ClientData/HotbarLocked",
-                "slot": None if experimental else slot, "before": original,
+                "slot": None if flag_edit or marker_edit else slot, "before": original,
                 "after": operation == "set-flag" if flag_edit else requested,
                 "flag": requested if flag_edit else None, "member": intended_member,
                 "source_sha256": before["save"]["sha256"], "output": str(output) if output else None,
                 "backup_required": True,
                 "deep_resource_checks": deep_checks,
                 "risks": ["Restores only a persisted integrity marker after canonical checksum and LSF parsing; does not repair opaque ECS corruption. A game reload is still required."] if marker_edit else
-                         ["Story DB writes do not execute quest events or synchronize ECS"] if flag_edit else []}
+                         ["Story DB writes do not execute quest events or synchronize ECS"] if flag_edit else
+                         ["Only the saved HotbarLocked metadata is changed. In-game effect and persistence are unverified; a tested False output was read back as True after native saving, with the cause unresolved."]}
         if dry_run:
             return {"schema_version": 1, "capability": plan["capability"], "dry_run": True, "written": False, "plan": plan}
         backup = _backup(source, before["save"]["sha256"], backup_dir or cache_root().resolve() / "backups")

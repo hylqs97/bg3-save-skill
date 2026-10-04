@@ -49,8 +49,17 @@ class PublicApiTests(unittest.TestCase):
     def test_capabilities_are_explicit_and_do_not_claim_ecs_writes(self):
         capabilities = service.capabilities()
         self.assertEqual(capabilities["operations"]["set-gold"], "UNSUPPORTED")
-        self.assertEqual(capabilities["operations"]["set-hotbar-lock"], "SUPPORTED")
+        self.assertEqual(capabilities["operations"]["set-hotbar-lock"], "EXPERIMENTAL")
         self.assertEqual(capabilities["operations"]["set-flag"], "EXPERIMENTAL")
+
+    def test_hotbar_edit_refused_without_opt_in_before_any_save_read(self):
+        output = io.StringIO()
+        with patch("bg3save.cli.Backend"), patch("bg3save.service.opened_save") as read, redirect_stdout(output):
+            code = main(["modify", "set-hotbar-lock", "missing.lsv", "false", "--output", "new.lsv", "--json"])
+        self.assertEqual(code, 2)
+        error = json.loads(output.getvalue())["error"]
+        self.assertEqual(error["code"], "experimental_opt_in_required")
+        read.assert_not_called()
 
     def test_unsupported_edit_rejected_without_reading_or_writing_save(self):
         for operation in ("set-gold", "add-item", "remove-item", "set-approval", "repair"):
@@ -124,6 +133,8 @@ class SaveMutationTests(unittest.TestCase):
         self.original_hash = sha256(self.source)
 
     def modify(self, name="modified.lsv", operation="set-hotbar-lock", value=False, **kwargs):
+        if operation == "set-hotbar-lock":
+            kwargs.setdefault("allow_experimental", True)
         return service.modify(self.source, self.root / name, operation, value,
                               backend=self.backend, backup_dir=self.root / "backups", **kwargs)
 
@@ -136,11 +147,14 @@ class SaveMutationTests(unittest.TestCase):
         self.assertEqual([p.name for p in self.root.iterdir()], ["original.lsv"])
         self.assertEqual(sha256(self.source), self.original_hash)
 
-    def test_safe_edit_preserves_all_unmodified_payloads_and_has_verified_backup(self):
+    def test_experimental_metadata_edit_preserves_payloads_and_has_verified_backup(self):
         before = service.inspect(self.source, self.backend)
         report = self.modify()
         after = service.inspect(Path(report["output"]), self.backend)
         self.assertTrue(report["original_unchanged"])
+        self.assertEqual(report["capability"], "EXPERIMENTAL")
+        self.assertTrue(report["plan"]["risks"])
+        self.assertEqual(report["plan"]["slot"], 1)
         self.assertEqual(sha256(Path(report["backup"])), self.original_hash)
         self.assertEqual(after["clients"][0]["HotbarLocked"], "False")
         self.assertEqual(report["diff"]["changed_archive_members"], ["meta.lsf"])
@@ -172,7 +186,8 @@ class SaveMutationTests(unittest.TestCase):
             output.touch(exist_ok=True)
             expected = sha256(output)
             with self.assertRaises(SaveError):
-                service.modify(self.source, output, "set-hotbar-lock", False, backend=self.backend)
+                service.modify(self.source, output, "set-hotbar-lock", False, backend=self.backend,
+                               allow_experimental=True)
             self.assertEqual(sha256(output), expected)
 
     def test_experimental_writes_require_explicit_opt_in(self):
@@ -211,7 +226,7 @@ class SaveMutationTests(unittest.TestCase):
             self.backend.repack(handle["directory"], unknown, 18)
         with self.assertRaises(SaveError) as caught:
             service.modify(unknown, self.root / "no-write.lsv", "set-hotbar-lock", False,
-                           backend=self.backend, backup_dir=self.root / "backups")
+                           backend=self.backend, backup_dir=self.root / "backups", allow_experimental=True)
         self.assertEqual(caught.exception.code, "unsupported_game_version")
         self.assertFalse((self.root / "backups").exists())
 
@@ -235,7 +250,7 @@ class SaveMutationTests(unittest.TestCase):
             self.backend.repack(handle["directory"], not_sane, 18)
         for action in (lambda: service.verify(not_sane, self.backend),
                        lambda: service.modify(not_sane, self.root / "no-output.lsv", "set-hotbar-lock", False,
-                                              backend=self.backend, backup_dir=self.root / "backups")):
+                                              backend=self.backend, backup_dir=self.root / "backups", allow_experimental=True)):
             with self.assertRaises(SaveError) as caught:
                 action()
             self.assertEqual(caught.exception.code, "save_sanity_failed")

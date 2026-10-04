@@ -14,7 +14,7 @@ CI runs that suite on Windows and Linux with Python 3.11 and 3.13. It does not d
 
 ## Recorded validation
 
-On **2026-10-04**, the complete local suite passed **97 tests in 54.053 seconds, with no skips**. `BG3SAVE_INTEGRATION=1` enabled the actual LSLib backend; an explicitly supplied private native `.lsv` enabled the optional native-template/checksum checks. The private file, its path and generated output are excluded from this repository. This result does not establish an actual BG3 reload: game acceptance for both a supported hotbar change and experimental marker restoration remains pending.
+On **2026-10-04**, the complete local suite passed **98 tests in 66.795 seconds, with no skips**. `BG3SAVE_INTEGRATION=1` enabled the actual LSLib backend; an explicitly supplied private native `.lsv` enabled the optional native-template/checksum checks. The private file, its path and generated output are excluded from this repository. This test run does not establish a BG3 reload. Separate runtime observations validated one diagnosed integrity-marker repair; hotbar UI effect and persistence remain unverified. See [acceptance evidence](acceptance.md).
 
 Malformed JSON structure in SaveInfo, toolchain configuration and rollback manifests is rejected with a stable JSON error before save reading or output publication, as appropriate. Regression scenarios exercise the CLI boundary rather than swallowing all programming exceptions.
 
@@ -50,14 +50,14 @@ For a separate game-format acceptance check, use a private local `.lsv` that you
 1. The original SHA-256 and format/version evidence.
 2. Package extraction and resource/Story parsing.
 3. Structured `inspect`, `party`, `flags`, `quests`, `missed-content` and `verify` outputs.
-4. A `modify set-hotbar-lock` dry-run with no output or backup mutation.
-5. A real new-output hotbar-lock change with an unchanged original and a verified backup.
+4. An experimental `modify set-hotbar-lock --allow-experimental` dry-run with no output or backup mutation.
+5. An opted-in new-output hotbar metadata change with an unchanged original and a verified backup.
 6. Successful parse/verify of the repacked save and a diff confined to the intended metadata change.
 7. Rollback from the emitted manifest and byte identity of the restored copy and original.
 
-For gameplay acceptance, load the new save in the matching BG3 version and confirm that it resumes and the selected player's hotbar lock matches the requested state. Record this as a separate result; a green unit suite and a successfully reparsed container cannot establish runtime acceptance.
+For hotbar gameplay acceptance, load the new save in the matching BG3 version and confirm both that it resumes without the warning and that the selected player's hotbar lock matches and persists as requested. Record this as a separate result; a green unit suite and a successfully reparsed container cannot establish runtime acceptance. The actual tested false-field output loaded cleanly, but its subsequent native save contained true. The cause is unknown, and no successful hotbar UI effect is claimed.
 
-The experimental `restore-integrity-marker` path needs separate tests for explicit opt-in, a false marker, canonical checksum and every-LSF parsing, a unique boolean field, dry-run without artifacts, a minimal metadata change and unchanged payloads. Rollback must recover the exact false-marker source and report `verification.valid: false` with a warning. A successful game reload for this recovery is a separate runtime result; it is not established by those tests and is currently pending.
+The experimental `restore-integrity-marker` path needs separate tests for explicit opt-in, a false marker, canonical checksum and every-LSF parsing, a unique boolean field, dry-run without artifacts, a minimal metadata change and unchanged payloads. Rollback must recover the exact false-marker source and report `verification.valid: false` with a warning. One diagnosed case also passed a separate warning-free BG3 reload and native re-save with a true marker and valid checksums on 2026-10-04. That supplies the MVP's verified safe-repair example, not a blanket corruption-repair guarantee. The CLI continues to report `game_load_validated: false`; external observations must not be forged into an automatic check.
 
 ## Skill installation smoke test
 
