@@ -1,5 +1,7 @@
 # BG3 Save Skill
 
+**English** | [简体中文](README.zh-CN.md)
+
 A local Agent Skill and deterministic CLI for **Baldur's Gate 3 save analysis**: inspect a `.lsv`, expose save evidence as JSON, identify possible missed content with bg3.wiki sources, and perform narrowly scoped experimental edits with backup and rollback.
 
 The Agent interprets natural language; the CLI reads or edits explicit semantic fields through LSLib. Player saves stay on your machine. The project does **not** claim to detect every missed quest or safely rewrite arbitrary ECS/LSMF state.
